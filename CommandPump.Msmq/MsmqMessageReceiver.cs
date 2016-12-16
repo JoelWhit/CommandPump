@@ -1,0 +1,166 @@
+﻿using CommandPump.Contract;
+using System;
+using System.IO;
+using System.Messaging;
+using System.Threading.Tasks;
+using CommandPump.Event;
+
+namespace CommandPump.MSMQ
+{
+    public class MsmqMessageReceiver : IMessageReceiver
+    {
+        private MessageQueue _queue { get; set; }
+        public string QueueName
+        {
+            get
+            {
+                return _queue?.QueueName;
+            }
+        }
+
+
+        public MsmqMessageReceiver(string connectionString)
+        {
+            if (!MessageQueue.Exists(connectionString))
+            {
+                _queue = MessageQueue.Create(connectionString, true);
+            }
+            else
+            {
+                _queue = new MessageQueue(connectionString);
+            }
+        }
+
+        /// <summary>
+        /// Starts the message pump
+        /// </summary>
+        public void Start()
+        {
+
+        }
+
+        /// <summary>
+        /// Stops the message pump
+        /// </summary>
+        public void Stop()
+        {
+
+        }
+
+        /// <summary>
+        /// Attempts to recieve a message, triggering the processing of the message on another thread
+        /// </summary>
+        public void TriggerReceive()
+        {
+            MessageQueueTransaction trans = new MessageQueueTransaction();
+
+            Message message = null;
+            trans.Begin();
+            try
+            {
+                message = _queue.Receive(trans);
+            }
+            catch (TimeoutException) // expecting a timeout error here
+            {
+                return;
+            }
+
+            if (message != null)
+            {
+                // transaction will now be commited / disposed in another thread
+                ProcessReceivedMessage(trans, message); // process on another thread                
+            }
+            else
+            {
+                trans.Abort();
+                trans.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Event fired when a message processing Task has been created
+        /// </summary>
+        public event EventHandler<MessageProcessingEventArgs> OnMessageProcessing;
+
+        /// <summary>
+        /// Delegate used to process messages
+        /// </summary>
+        public Func<Envelope<Stream>, MessageReleaseAction> InvokeMessageHandler { get; set; }
+
+        /// <summary>
+        /// Called by the message receiver to start processing a message
+        /// </summary>
+        /// <param name="trans"></param>
+        /// <param name="message"></param>
+        private void ProcessReceivedMessage(MessageQueueTransaction trans, Message message)
+        {
+            Task messageProcess = Task.Run(() =>
+           {
+               Envelope<Stream> envelope = CreateEnvelope(message);
+               MessageReleaseAction action = InvokeMessageHandler(envelope);
+
+               CompleteMessage(message, trans, action);
+           });
+            MessageProcessingEventArgs args = new MessageProcessingEventArgs() { Task = messageProcess, MessageId = message.Id };
+
+            // the CorrelationId throws an exception when you attempt to get the value 
+            try
+            {
+                args.CorrelationId = message.CorrelationId;
+            }
+            catch
+            {
+                //args.CorrelationId = string.Empty;
+            }
+
+            OnMessageProcessing?.Invoke(this, args);
+        }
+
+        private void CompleteMessage(Message message, MessageQueueTransaction trans, MessageReleaseAction releaseResult)
+        {
+            switch (releaseResult)
+            {
+                case MessageReleaseAction.Abandon:
+                case MessageReleaseAction.Complete:
+                    break;
+                case MessageReleaseAction.DeadLetter:
+                    message.UseDeadLetterQueue = true;
+                    break;
+            }
+            trans.Commit();
+            trans.Dispose();
+        }
+
+        /// <summary>
+        /// Takes the metadata envelope and translates it to messaging implementation
+        /// </summary>
+        /// <param name="command"></param>
+        /// <returns></returns>
+        private Envelope<Stream> CreateEnvelope(Message command)
+        {
+
+            Envelope<Stream> message = Envelope.Create(command.BodyStream);
+
+            if (!string.IsNullOrWhiteSpace(command.Id))
+            {
+                message.MessageId = command.Id;
+            }
+
+            try
+            {
+                message.CorrelationId = command.CorrelationId;
+            }
+            catch
+            {
+
+            }
+
+            //if (command.TimeToLive > TimeSpan.Zero)
+            //{
+            //    message.TimeToLive = command.TimeToLive;
+            //}
+
+            return message;
+        }
+    }
+}
