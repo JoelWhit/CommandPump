@@ -15,7 +15,7 @@ namespace CommandPump
     {
         private IMessageReceiver _receiver;
         private object _cancellationTokenLock = new object();
-        private TaskThrottle _throttle;
+        private TaskThrottler _throttler;
         private int _maxDegreeOfParallelism;
 
         private CancellationTokenSource cancellationSource;
@@ -25,7 +25,7 @@ namespace CommandPump
             _receiver = receiver;
             _receiver.InvokeMessageHandler = OnMessageReceived;
             _maxDegreeOfParallelism = maxDegreeOfParallelism;
-            _throttle = new TaskThrottle(maxDegreeOfParallelism);
+            _throttler = new TaskThrottler(maxDegreeOfParallelism);
 
             receiver.OnMessageProcessing += OnMessageProcessingHandler;
         }

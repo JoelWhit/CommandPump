@@ -66,7 +66,7 @@
     <Compile Include="Contract\ITextSerializer.cs" />
     <Compile Include="Contract\IMessageReceiver.cs" />
     <Compile Include="MessagePump.cs" />
-    <Compile Include="TaskThrottle.cs" />
+    <Compile Include="TaskThrottler.cs" />
     <Compile Include="TaskCache.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

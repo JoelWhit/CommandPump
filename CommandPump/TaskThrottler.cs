@@ -9,14 +9,14 @@ namespace CommandPump
     /// Provides a means of regulating the number of tasks concurrently running. 
     /// Can handle multiple input threads through wait handles
     /// </summary>
-    public class TaskThrottle
+    public class TaskThrottler
     {
         private AutoResetEvent _waitHandle;
 
         public TaskCache TaskCache;
         public int MaxDegreeOfParallelism;
 
-        public TaskThrottle(int maxDegreeOfParallelism)
+        public TaskThrottler(int maxDegreeOfParallelism)
         {
             TaskCache = new TaskCache();
             MaxDegreeOfParallelism = maxDegreeOfParallelism;
