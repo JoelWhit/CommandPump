@@ -1,4 +1,6 @@
-﻿using CommandPump.Contract;
+﻿using CommandPump.Common;
+using CommandPump.Contract;
+using CommandPump.Enum;
 using CommandPump.Event;
 using System;
 using System.IO;
@@ -72,7 +74,7 @@ namespace CommandPump
         /// <param name="e"></param>
         private void OnMessageProcessingHandler(object sender, MessageProcessingEventArgs e)
         {
-            _throttle.AddTask(e.Task);
+            _throttler.AddTask(e.Task);
         }
 
         /// <summary>
@@ -84,7 +86,7 @@ namespace CommandPump
             while (!cancellationToken.IsCancellationRequested)
             {
                 // paralism check - running tasks
-                _throttle.WaitUntilAllowedParallelism(cancellationToken);
+                _throttler.WaitUntilAllowedParallelism(cancellationToken);
 
                 _receiver.TriggerReceive();
             }
@@ -119,6 +121,5 @@ namespace CommandPump
         {
 
         }
-
     }
 }

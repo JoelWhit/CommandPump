@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace CommandPump.Contract
+﻿namespace CommandPump.Contract
 {
     public interface ICommandPumpReceiver
     {

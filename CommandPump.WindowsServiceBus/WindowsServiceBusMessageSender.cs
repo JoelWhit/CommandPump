@@ -1,9 +1,9 @@
 ﻿using Microsoft.ServiceBus;
 using Microsoft.ServiceBus.Messaging;
-using System;
 using System.Collections.Generic;
 using System.IO;
 using CommandPump.Contract;
+using CommandPump.Common;
 
 namespace CommandPump.WindowsServiceBus
 {
@@ -19,9 +19,9 @@ namespace CommandPump.WindowsServiceBus
             {
                 return _queue?.Path;
             }
-        } 
+        }
 
-
+        public IMessageConverter MessageConverter { get; } = new WindowsServiceBusMessageConverter();
         public WindowsServiceBusMessageSender(string queueName, string connectionString)
         {
             _namespaceManager = NamespaceManager.CreateFromConnectionString(connectionString);
@@ -37,7 +37,7 @@ namespace CommandPump.WindowsServiceBus
         /// <param name="message"></param>
         public void Send(Envelope<Stream> message)
         {
-            _queue.Send(ConstructMessage(message));
+            _queue.Send((BrokeredMessage)MessageConverter.ConstructMessage(message));
         }
 
         /// <summary>
@@ -49,43 +49,10 @@ namespace CommandPump.WindowsServiceBus
             List<BrokeredMessage> msg = new List<BrokeredMessage>();
             foreach (var message in messages)
             {
-                msg.Add(ConstructMessage(message));
+                msg.Add((BrokeredMessage)MessageConverter.ConstructMessage(message));
             }
 
             _queue.SendBatch(msg);
-        }
-
-        /// <summary>
-        /// Takes the metadata envelope and translates it to messaging implementation
-        /// </summary>
-        /// <param name="command"></param>
-        /// <returns></returns>
-        private BrokeredMessage ConstructMessage(Envelope<Stream> command)
-        {
-
-            var message = new BrokeredMessage(command.Body, true);
-
-            if (!string.IsNullOrWhiteSpace(command.MessageId))
-            {
-                message.MessageId = command.MessageId;
-            }
-
-            if (!string.IsNullOrWhiteSpace(command.CorrelationId))
-            {
-                message.CorrelationId = command.CorrelationId;
-            }
-
-            if (command.Delay > TimeSpan.Zero)
-            {
-                message.ScheduledEnqueueTimeUtc = DateTime.UtcNow.Add(command.Delay);
-            }
-
-            if (command.TimeToLive > TimeSpan.Zero)
-            {
-                message.TimeToLive = command.TimeToLive;
-            }
-
-            return message;
         }
     }
 }

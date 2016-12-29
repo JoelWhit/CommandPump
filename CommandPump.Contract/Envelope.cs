@@ -17,7 +17,7 @@
 
 using System;
 
-namespace CommandPump
+namespace CommandPump.Common
 {
     /// <summary>
     /// Static factory class for <see cref="Envelope{T}"/>.

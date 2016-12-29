@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommandPump.Msmq", "Command
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommandPump.WindowsServiceBus", "CommandPump.WindowsServiceBus\CommandPump.WindowsServiceBus.csproj", "{EBA721B4-A246-45C6-B655-4EA18B0EA1C2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommandPump.Common", "CommandPump.Contract\CommandPump.Common.csproj", "{A010394B-CD84-404B-9D4B-6EEE79B16EBE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{EBA721B4-A246-45C6-B655-4EA18B0EA1C2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EBA721B4-A246-45C6-B655-4EA18B0EA1C2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EBA721B4-A246-45C6-B655-4EA18B0EA1C2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A010394B-CD84-404B-9D4B-6EEE79B16EBE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A010394B-CD84-404B-9D4B-6EEE79B16EBE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A010394B-CD84-404B-9D4B-6EEE79B16EBE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A010394B-CD84-404B-9D4B-6EEE79B16EBE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

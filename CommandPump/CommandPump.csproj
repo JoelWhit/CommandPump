@@ -30,10 +30,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Messaging" />
@@ -48,30 +44,20 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Contract\ICommandHandler.cs" />
-    <Compile Include="Contract\ICommandDispatch.cs" />
-    <Compile Include="Contract\IMessagePump.cs" />
     <Compile Include="CommandPumpReceiver.cs" />
     <Compile Include="CommandPumpSender.cs" />
     <Compile Include="Extension\MessageSenderExtensions.cs" />
     <Compile Include="CommandDispatch.cs" />
-    <Compile Include="Envelope.cs" />
-    <Compile Include="Event\MessageProcessingEventArgs.cs" />
-    <Compile Include="Serializer\JsonTextSerializer.cs" />
-    <Compile Include="MessageReleaseAction.cs" />
-    <Compile Include="Contract\ICommand.cs" />
-    <Compile Include="Contract\ICommandPumpReceiver.cs" />
-    <Compile Include="Contract\ICommandPumpSender.cs" />
-    <Compile Include="Contract\IMessageSender.cs" />
-    <Compile Include="Contract\ITextSerializer.cs" />
-    <Compile Include="Contract\IMessageReceiver.cs" />
     <Compile Include="MessagePump.cs" />
     <Compile Include="TaskThrottler.cs" />
     <Compile Include="TaskCache.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
+    <ProjectReference Include="..\CommandPump.Contract\CommandPump.Common.csproj">
+      <Project>{A010394B-CD84-404B-9D4B-6EEE79B16EBE}</Project>
+      <Name>CommandPump.Common</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

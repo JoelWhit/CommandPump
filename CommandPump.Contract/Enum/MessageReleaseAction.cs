@@ -1,4 +1,4 @@
-﻿namespace CommandPump
+﻿namespace CommandPump.Enum
 {
     public enum MessageReleaseAction
     {

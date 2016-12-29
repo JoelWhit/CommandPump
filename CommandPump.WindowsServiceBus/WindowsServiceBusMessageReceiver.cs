@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 using CommandPump.Contract;
 using Microsoft.ServiceBus.Messaging;
 using CommandPump.Event;
+using CommandPump.Enum;
+using CommandPump.Common;
 
 namespace CommandPump.WindowsServiceBus
 {
@@ -14,6 +16,7 @@ namespace CommandPump.WindowsServiceBus
         private NamespaceManager _namespaceManager;
         private MessagingFactory _messagingFactory;
 
+        public IMessageConverter MessageConverter { get; } = new WindowsServiceBusMessageConverter();
 
         public int PrefetchCount
         {
@@ -98,7 +101,7 @@ namespace CommandPump.WindowsServiceBus
         {
             Task messageProcess = Task.Run(() =>
             {
-                Envelope<Stream> env = CreateEnvelope(message);
+                Envelope<Stream> env = MessageConverter.ConstructEnvelope(message);
                 MessageReleaseAction releaseResult = InvokeMessageHandler(env);
 
                 CompleteMessage(message, releaseResult);
@@ -106,35 +109,6 @@ namespace CommandPump.WindowsServiceBus
 
             OnMessageProcessing?.Invoke(this, new MessageProcessingEventArgs() { Task = messageProcess, MessageId = message.MessageId, CorrelationId = message.CorrelationId });
         }
-
-        /// <summary>
-        /// Takes the metadata envelope and translates it to messaging implementation
-        /// </summary>
-        /// <param name="command"></param>
-        /// <returns></returns>
-        private Envelope<Stream> CreateEnvelope(BrokeredMessage command)
-        {
-
-            Envelope<Stream> message = Envelope.Create(command.GetBody<Stream>());
-
-            if (!string.IsNullOrWhiteSpace(command.MessageId))
-            {
-                message.MessageId = command.MessageId;
-            }
-
-            if (!string.IsNullOrWhiteSpace(command.CorrelationId))
-            {
-                message.CorrelationId = command.CorrelationId;
-            }
-
-            if (command.TimeToLive > TimeSpan.Zero)
-            {
-                message.TimeToLive = command.TimeToLive;
-            }
-
-            return message;
-        }
-
 
         private void CompleteMessage(BrokeredMessage message, MessageReleaseAction action)
         {

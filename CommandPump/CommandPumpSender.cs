@@ -1,5 +1,7 @@
-﻿using CommandPump.Contract;
+﻿using CommandPump.Common;
+using CommandPump.Contract;
 using CommandPump.Extension;
+using CommandPump.Serializer;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -14,6 +16,12 @@ namespace CommandPump
         public IMessageSender Sender { get; set; }
 
         public ITextSerializer Serializer { get; set; }
+
+        public CommandPumpSender(IMessageSender sender)
+        {
+            Sender = sender;
+            Serializer = new JsonTextSerializer();
+        }
 
         public CommandPumpSender(IMessageSender sender, ITextSerializer serializer)
         {
@@ -40,7 +48,6 @@ namespace CommandPump
         {
             Sender.Send(ConstructEnvelope(command, ConstructCommandStream(command.Body)));
         }
-
 
         private Stream ConstructCommandStream(ICommand command)
         {

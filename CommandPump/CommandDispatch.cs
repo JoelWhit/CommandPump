@@ -39,7 +39,6 @@ namespace CommandPump
             }
         }
 
-
         /// <summary>
         /// Attempts locate unregistered handlers via reflection and add them to the cache
         /// </summary>

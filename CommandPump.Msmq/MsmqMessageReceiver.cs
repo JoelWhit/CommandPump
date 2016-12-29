@@ -4,8 +4,10 @@ using System.IO;
 using System.Messaging;
 using System.Threading.Tasks;
 using CommandPump.Event;
+using CommandPump.Enum;
+using CommandPump.Common;
 
-namespace CommandPump.MSMQ
+namespace CommandPump.Msmq
 {
     public class MsmqMessageReceiver : IMessageReceiver
     {
@@ -87,6 +89,8 @@ namespace CommandPump.MSMQ
         /// </summary>
         public Func<Envelope<Stream>, MessageReleaseAction> InvokeMessageHandler { get; set; }
 
+        public IMessageConverter MessageConverter { get; } = new MsmqMessageConverter();
+
         /// <summary>
         /// Called by the message receiver to start processing a message
         /// </summary>
@@ -96,7 +100,7 @@ namespace CommandPump.MSMQ
         {
             Task messageProcess = Task.Run(() =>
            {
-               Envelope<Stream> envelope = CreateEnvelope(message);
+               Envelope<Stream> envelope = MessageConverter.ConstructEnvelope(message);
                MessageReleaseAction action = InvokeMessageHandler(envelope);
 
                CompleteMessage(message, trans, action);
@@ -108,7 +112,7 @@ namespace CommandPump.MSMQ
             {
                 args.CorrelationId = message.CorrelationId;
             }
-            catch
+            catch //will throw an exception if the correlationid is null
             {
                 //args.CorrelationId = string.Empty;
             }
@@ -136,31 +140,5 @@ namespace CommandPump.MSMQ
         /// </summary>
         /// <param name="command"></param>
         /// <returns></returns>
-        private Envelope<Stream> CreateEnvelope(Message command)
-        {
-
-            Envelope<Stream> message = Envelope.Create(command.BodyStream);
-
-            if (!string.IsNullOrWhiteSpace(command.Id))
-            {
-                message.MessageId = command.Id;
-            }
-
-            try
-            {
-                message.CorrelationId = command.CorrelationId;
-            }
-            catch
-            {
-
-            }
-
-            //if (command.TimeToLive > TimeSpan.Zero)
-            //{
-            //    message.TimeToLive = command.TimeToLive;
-            //}
-
-            return message;
-        }
     }
 }

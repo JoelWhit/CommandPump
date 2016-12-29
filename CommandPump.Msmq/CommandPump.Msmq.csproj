@@ -41,14 +41,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="MsmqMessageConverter.cs" />
     <Compile Include="MsmqMessageReceiver.cs" />
     <Compile Include="MsmqMessageSender.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\CommandPump\CommandPump.csproj">
-      <Project>{D96397D7-1FB5-4B19-A962-6FBAD30543DB}</Project>
-      <Name>CommandPump</Name>
+    <ProjectReference Include="..\CommandPump.Contract\CommandPump.Common.csproj">
+      <Project>{A010394B-CD84-404B-9D4B-6EEE79B16EBE}</Project>
+      <Name>CommandPump.Common</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

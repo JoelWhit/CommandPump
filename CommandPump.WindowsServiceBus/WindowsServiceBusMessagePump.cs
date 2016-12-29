@@ -1,4 +1,6 @@
-﻿using CommandPump.Contract;
+﻿using CommandPump.Common;
+using CommandPump.Contract;
+using CommandPump.Enum;
 using CommandPump.Event;
 using Microsoft.ServiceBus;
 using Microsoft.ServiceBus.Messaging;
@@ -48,6 +50,7 @@ namespace CommandPump.WindowsServiceBus
             }
         }
 
+        public IMessageConverter MessageConverter { get; } = new WindowsServiceBusMessageConverter();
 
         public WindowsServiceBusMessagePump(string queueName, string connectionString, int maxDegreeOfParalism, int preFetch = 10)
         {
@@ -105,7 +108,7 @@ namespace CommandPump.WindowsServiceBus
         {
             Task messageProcess = Task.Run(() =>
             {
-                Envelope<Stream> env = CreateEnvelope(message);
+                Envelope<Stream> env = MessageConverter.ConstructEnvelope(message);
 
                 MessageReleaseAction releaseResult = InvokeMessageHandler(env);
 
@@ -114,7 +117,7 @@ namespace CommandPump.WindowsServiceBus
             OnMessageProcessing?.Invoke(this, new MessageProcessingEventArgs() { Task = messageProcess, MessageId = message.MessageId, CorrelationId = message.CorrelationId });
 
             // http://stackoverflow.com/questions/30467896/brokeredmessage-automatically-disposed-after-calling-onmessage
-            // ...The received message needs to be processed in the callback function's life time...
+            // "...The received message needs to be processed in the callback function's life time..."
             return messageProcess;
         }
 
@@ -126,34 +129,6 @@ namespace CommandPump.WindowsServiceBus
         private void OnExceptionReceived(object sender, ExceptionReceivedEventArgs e)
         {
             Console.WriteLine("Unhandled Exception: " + e.Exception);
-        }
-
-        /// <summary>
-        /// Takes the metadata envelope and translates it to messaging implementation
-        /// </summary>
-        /// <param name="command"></param>
-        /// <returns></returns>
-        private Envelope<Stream> CreateEnvelope(BrokeredMessage command)
-        {
-
-            Envelope<Stream> message = Envelope.Create(command.GetBody<Stream>());
-
-            if (!string.IsNullOrWhiteSpace(command.MessageId))
-            {
-                message.MessageId = command.MessageId;
-            }
-
-            if (!string.IsNullOrWhiteSpace(command.CorrelationId))
-            {
-                message.CorrelationId = command.CorrelationId;
-            }
-
-            if (command.TimeToLive > TimeSpan.Zero)
-            {
-                message.TimeToLive = command.TimeToLive;
-            }
-
-            return message;
         }
 
         private void CompleteMessage(BrokeredMessage message, MessageReleaseAction action)

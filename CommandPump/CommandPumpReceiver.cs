@@ -1,6 +1,5 @@
-﻿using System;
-using System.Threading.Tasks;
-using CommandPump.Contract;
+﻿using CommandPump.Contract;
+using CommandPump.Serializer;
 using System.IO;
 
 namespace CommandPump
@@ -10,9 +9,14 @@ namespace CommandPump
     /// </summary>
     public class CommandPumpReceiver : MessagePump, ICommandPumpReceiver
     {
-
         public ITextSerializer Serializer { get; set; }
         public ICommandDispatch Dispatch { get; set; }
+
+        public CommandPumpReceiver(IMessageReceiver receiver, int maxDegreeOfParalism) : base(receiver, maxDegreeOfParalism)
+        {
+            Serializer = new JsonTextSerializer();
+            Dispatch = new CommandDispatch();
+        }
 
         public CommandPumpReceiver(IMessageReceiver receiver, ITextSerializer serilizer, ICommandDispatch commandDispatch, int maxDegreeOfParalism) : base(receiver, maxDegreeOfParalism)
         {
@@ -25,7 +29,6 @@ namespace CommandPump
             ICommand command = CreateCommand((Stream)Payload);
             Dispatch.Dispatch(command);
         }
-
 
         private ICommand CreateCommand(Stream messageStream)
         {
