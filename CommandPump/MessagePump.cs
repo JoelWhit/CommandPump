@@ -121,5 +121,13 @@ namespace CommandPump
         {
 
         }
+
+        /// <summary>
+        /// Waits for the currently processing messages to complete
+        /// </summary>
+        public void WaitForCompletion()
+        {
+            _throttler.WaitForAllTasksToComplete();
+        }
     }
 }

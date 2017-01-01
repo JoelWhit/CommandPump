@@ -42,7 +42,7 @@ namespace CommandPump
         /// <summary>
         /// Blocks untill all the tasks currently cached to complete
         /// </summary>
-        public void WaitForTasksAllToComplete()
+        public void WaitForAllTasksToComplete()
         {
             Task.WaitAll(TaskCache.TaskCollection.Values.ToArray());
         }

@@ -11,5 +11,11 @@
         /// Stops the message pump
         /// </summary>
         void Stop();
+
+        /// <summary>
+        /// Waits for all of the currently processing messages to complete
+        /// </summary>
+        void WaitForCompletion();
+
     }
 }

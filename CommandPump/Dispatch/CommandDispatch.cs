@@ -4,7 +4,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace CommandPump
+namespace CommandPump.Dispatch
 {
     public class CommandDispatch : ICommandDispatch
     {
@@ -18,9 +18,11 @@ namespace CommandPump
         /// <summary>
         /// Registers the specified command handler.
         /// </summary>
-        public void Register(ICommandHandler commandHandler)
+        public void RegisterHandler(ICommandHandler commandHandler)
         {
             var genericHandler = typeof(ICommandHandler<>);
+
+            // find all the command handlers in the supplied class
             var supportedCommandTypes = commandHandler.GetType()
                 .GetInterfaces()
                 .Where(iface => iface.IsGenericType && iface.GetGenericTypeDefinition() == genericHandler)
@@ -29,7 +31,7 @@ namespace CommandPump
 
             if (_commandHandlers.Keys.Any(registeredType => supportedCommandTypes.Contains(registeredType)))
             {
-                throw new ArgumentException("The command handled by the received handler already has a registered handler.");
+                throw new ArgumentException("The command handler supplied has already been registered.");
             }
 
             // Register this handler for each of he handled types.
@@ -61,7 +63,7 @@ namespace CommandPump
 
             // gets all the commands that the handler class can handle
             // by looking through the interfaces based on the ICommandHandler<> (generic) type
-            List<Type> supportedCommandTypes = commandHandler.GetInterfaces()                
+            List<Type> supportedCommandTypes = commandHandler.GetInterfaces()
                 .Where(iface => iface.IsGenericType && iface.GetGenericTypeDefinition() == handlerGenericType)
                 .Select(iface => iface.GetGenericArguments()[0])
                 .ToList();
@@ -75,7 +77,7 @@ namespace CommandPump
                 {
                     _commandHandlers.TryAdd(supportedCommand, handler);
                 }
-            }                  
+            }
         }
 
         public void Dispatch<T>(T command) where T : ICommand

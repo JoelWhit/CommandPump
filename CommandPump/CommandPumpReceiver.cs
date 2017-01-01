@@ -1,4 +1,5 @@
 ﻿using CommandPump.Contract;
+using CommandPump.Dispatch;
 using CommandPump.Serializer;
 using System.IO;
 
@@ -12,7 +13,7 @@ namespace CommandPump
         public ITextSerializer Serializer { get; set; }
         public ICommandDispatch Dispatch { get; set; }
 
-        public CommandPumpReceiver(IMessageReceiver receiver, int maxDegreeOfParalism) : base(receiver, maxDegreeOfParalism)
+        public CommandPumpReceiver(IMessageReceiver receiver, int maxDegreeOfParalism = 1) : base(receiver, maxDegreeOfParalism)
         {
             Serializer = new JsonTextSerializer();
             Dispatch = new CommandDispatch();
