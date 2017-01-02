@@ -3,7 +3,7 @@ CommandPump is a message processing framework that attempts to make the processi
 as possible by handling the orchestration between all of these elements.
 
 ## Getting Started
-The quickest way to get started is to install MSMQ by running the following PowerShell command as administator:
+The quickest way to get started is to install MSMQ by running the following PowerShell command as administrator:
 ```powershell
 Enable-WindowsOptionalFeature -Online -FeatureName "MSMQ-Server", "MSMQ-Container" 
 #Disable-WindowsOptionalFeature -Online -FeatureName "MSMQ-Server", "MSMQ-Container" 
