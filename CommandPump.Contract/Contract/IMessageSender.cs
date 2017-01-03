@@ -6,11 +6,6 @@ namespace CommandPump.Contract
 {
     public interface IMessageSender 
     {
-        /// <summary>
-        /// Used to convert between business layer envelopes and implementation message formats
-        /// </summary>
-        IMessageConverter MessageConverter { get; }
-
         string QueueName { get; }
 
         /// <summary>

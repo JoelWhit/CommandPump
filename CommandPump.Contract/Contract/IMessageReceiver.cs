@@ -9,12 +9,6 @@ namespace CommandPump.Contract
     public interface IMessageReceiver
     {
         /// <summary>
-        /// Used to convert between business layer envelopes and implementation message formats
-        /// </summary>
-        IMessageConverter MessageConverter { get; }
-
-
-        /// <summary>
         /// Delegate used to process messages
         /// </summary>
         Func<Envelope<Stream>, MessageReleaseAction> InvokeMessageHandler { get; set; }

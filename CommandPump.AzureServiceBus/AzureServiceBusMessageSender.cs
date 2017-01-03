@@ -5,9 +5,9 @@ using System.IO;
 using CommandPump.Contract;
 using CommandPump.Common;
 
-namespace CommandPump.WindowsServiceBus
+namespace CommandPump.AzureServiceBus
 {
-    public class WindowsServiceBusMessageSender : IMessageSender
+    public class AzureServiceBusMessageSender : IMessageSender
     {
         private QueueClient _client;
         private NamespaceManager _namespaceManager;
@@ -21,7 +21,7 @@ namespace CommandPump.WindowsServiceBus
             }
         }
 
-        public WindowsServiceBusMessageSender(string queueName, string connectionString)
+        public AzureServiceBusMessageSender(string queueName, string connectionString)
         {
             _namespaceManager = NamespaceManager.CreateFromConnectionString(connectionString);
             _messagingFactory = MessagingFactory.Create(_namespaceManager.Address, _namespaceManager.Settings.TokenProvider);
@@ -36,7 +36,7 @@ namespace CommandPump.WindowsServiceBus
         /// <param name="message"></param>
         public void Send(Envelope<Stream> message)
         {
-            _client.Send(WindowsServiceBusMessageConverter.ConstructMessage(message));
+            _client.Send(AzureServiceBusMessageConverter.ConstructMessage(message));
         }
 
         /// <summary>
@@ -48,7 +48,7 @@ namespace CommandPump.WindowsServiceBus
             List<BrokeredMessage> msg = new List<BrokeredMessage>();
             foreach (var message in messages)
             {
-                msg.Add(WindowsServiceBusMessageConverter.ConstructMessage(message));
+                msg.Add(AzureServiceBusMessageConverter.ConstructMessage(message));
             }
 
             _client.SendBatch(msg);

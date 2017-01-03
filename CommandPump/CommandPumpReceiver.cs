@@ -2,6 +2,7 @@
 using CommandPump.Dispatch;
 using CommandPump.Serializer;
 using System.IO;
+using System.Text;
 
 namespace CommandPump
 {
@@ -35,7 +36,7 @@ namespace CommandPump
         {
             object command;
             using (var stream = messageStream)
-            using (var reader = new StreamReader(stream))
+            using (var reader = new StreamReader(stream, true))
             {
                 command = Serializer.Deserialize(reader);
             }

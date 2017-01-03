@@ -105,7 +105,7 @@ namespace CommandPump
                 ProcessReceivedMessage(message.Body, message.MessageId, message.CorrelationId);
                 return MessageReleaseAction.Complete;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 return MessageReleaseAction.DeadLetter;
             }

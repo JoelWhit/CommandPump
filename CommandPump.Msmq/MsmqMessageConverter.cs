@@ -5,23 +5,20 @@ using System.Messaging;
 
 namespace CommandPump.Msmq
 {
-    public class MsmqMessageConverter : IMessageConverter
+    public static class MsmqMessageConverter 
     {
-        public Envelope<Stream> ConstructEnvelope(object message)
+        public static Envelope<Stream> ConstructEnvelope(Message message)
         {
-            Message messageCasted = (Message)message;
+            Envelope<Stream> msg = Envelope.Create(message.BodyStream);
 
-
-            Envelope<Stream> msg = Envelope.Create(messageCasted.BodyStream);
-
-            if (!string.IsNullOrWhiteSpace(messageCasted.Id))
+            if (!string.IsNullOrWhiteSpace(message.Id))
             {
-                msg.MessageId = messageCasted.Id;
+                msg.MessageId = message.Id;
             }
 
             try
             {
-                msg.CorrelationId = messageCasted.CorrelationId;
+                msg.CorrelationId = message.CorrelationId;
             }
             catch //will throw an exception if correlationId is null
             {
@@ -31,7 +28,7 @@ namespace CommandPump.Msmq
             return msg;
         }
 
-        public object ConstructMessage(Envelope<Stream> envelope)
+        public static Message ConstructMessage(Envelope<Stream> envelope)
         {
             var message = new Message();
             message.BodyStream = envelope.Body;

@@ -8,12 +8,12 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 
-namespace CommandPump.WindowsServiceBus
+namespace CommandPump.AzureServiceBus
 {
     /// <summary>
     /// Creates a message pump by providing a wrapper round the existing OnMessage() functionality
     /// </summary>
-    public class WindowsServiceBusMessagePump : IMessageReceiver
+    public class AzureServiceBusMessagePump : IMessageReceiver
     {
         private NamespaceManager _namespaceManager;
         private MessagingFactory _messagingFactory;
@@ -50,7 +50,7 @@ namespace CommandPump.WindowsServiceBus
             }
         }
 
-        public WindowsServiceBusMessagePump(string queueName, string connectionString, int maxDegreeOfParalism, int preFetch = 10)
+        public AzureServiceBusMessagePump(string queueName, string connectionString, int maxDegreeOfParalism, int preFetch = 10)
         {
             _namespaceManager = NamespaceManager.CreateFromConnectionString(connectionString);
             _messagingFactory = MessagingFactory.Create(_namespaceManager.Address, _namespaceManager.Settings.TokenProvider);
@@ -104,14 +104,15 @@ namespace CommandPump.WindowsServiceBus
         /// <param name="message"></param>
         private Task ProcessReceivedMessage(BrokeredMessage message)
         {
-            Envelope<Stream> envelope = WindowsServiceBusMessageConverter.ConstructEnvelope(message);
             Task messageProcess = Task.Run(() =>
             {
-                MessageReleaseAction releaseResult = InvokeMessageHandler(envelope);
+                Envelope<Stream> env = AzureServiceBusMessageConverter.ConstructEnvelope(message);
+
+                MessageReleaseAction releaseResult = InvokeMessageHandler(env);
 
                 CompleteMessage(message, releaseResult);
             });
-            OnMessageProcessing?.Invoke(this, new MessageProcessingEventArgs() { Task = messageProcess, MessageId = envelope.MessageId, CorrelationId = envelope.CorrelationId });
+            OnMessageProcessing?.Invoke(this, new MessageProcessingEventArgs() { Task = messageProcess, MessageId = message.MessageId, CorrelationId = message.CorrelationId });
 
             // http://stackoverflow.com/questions/30467896/brokeredmessage-automatically-disposed-after-calling-onmessage
             // "...The received message needs to be processed in the callback function's life time..."

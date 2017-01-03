@@ -1,36 +1,21 @@
-﻿using CommandPump.Common;
-using CommandPump.Contract;
-using CommandPump.Enum;
-using CommandPump.Event;
-using Microsoft.ServiceBus;
-using Microsoft.ServiceBus.Messaging;
-using System;
+﻿using System;
 using System.IO;
+using Microsoft.ServiceBus;
 using System.Threading.Tasks;
+using CommandPump.Contract;
+using Microsoft.ServiceBus.Messaging;
+using CommandPump.Event;
+using CommandPump.Enum;
+using CommandPump.Common;
 
-namespace CommandPump.WindowsServiceBus
+namespace CommandPump.AzureServiceBus
 {
-    /// <summary>
-    /// Creates a message pump by providing a wrapper round the existing OnMessage() functionality
-    /// </summary>
-    public class WindowsServiceBusMessagePump : IMessageReceiver
+    public class AzureServiceBusMessageReceiver : IMessageReceiver
     {
+        private QueueClient _client;
         private NamespaceManager _namespaceManager;
         private MessagingFactory _messagingFactory;
-        private OnMessageOptions _messageOptions;
-        private QueueClient _client;
 
-        public int MaxDegreeOfParalism
-        {
-            get
-            {
-                return _messageOptions.MaxConcurrentCalls;
-            }
-            set
-            {
-                _messageOptions.MaxConcurrentCalls = value;
-            }
-        }
         public int PrefetchCount
         {
             get
@@ -50,17 +35,12 @@ namespace CommandPump.WindowsServiceBus
             }
         }
 
-        public WindowsServiceBusMessagePump(string queueName, string connectionString, int maxDegreeOfParalism, int preFetch = 10)
+        public AzureServiceBusMessageReceiver(string queueName, string connectionString, int preFetch = 10)
         {
             _namespaceManager = NamespaceManager.CreateFromConnectionString(connectionString);
             _messagingFactory = MessagingFactory.Create(_namespaceManager.Address, _namespaceManager.Settings.TokenProvider);
             _client = QueueClient.CreateFromConnectionString(connectionString, queueName);
-            _client.PrefetchCount = PrefetchCount;
-
-            _messageOptions = new OnMessageOptions();
-            _messageOptions.AutoComplete = false;
-            _messageOptions.ExceptionReceived += OnExceptionReceived;
-            _messageOptions.MaxConcurrentCalls = maxDegreeOfParalism;
+            PrefetchCount = preFetch;
         }
 
         /// <summary>
@@ -68,7 +48,7 @@ namespace CommandPump.WindowsServiceBus
         /// </summary>
         public void Start()
         {
-            _client.OnMessageAsync(ProcessReceivedMessage, _messageOptions);
+            return;
         }
 
         /// <summary>
@@ -76,16 +56,29 @@ namespace CommandPump.WindowsServiceBus
         /// </summary>
         public void Stop()
         {
-            _client.Close();
+            return;
         }
 
         /// <summary>
-        /// Does nothing. The magic starts when the Start() method is called
+        /// Attempts to recieve a message, triggering the processing of the message on another thread
         /// </summary>
         public void TriggerReceive()
         {
-            // do nothing - the message pump main loop is selfcontrolled on OnMessage
-            return;
+            BrokeredMessage message = null;
+
+            try
+            {
+                message = _client.Receive();
+            }
+            catch (TimeoutException) // expecting timeout exception
+            {
+                return;
+            }
+
+            if (message != null)
+            {
+                ProcessReceivedMessage(message); // process on another thread
+            }
         }
 
         /// <summary>
@@ -102,30 +95,17 @@ namespace CommandPump.WindowsServiceBus
         /// Called by the message receiver to start processing a message
         /// </summary>
         /// <param name="message"></param>
-        private Task ProcessReceivedMessage(BrokeredMessage message)
+        private void ProcessReceivedMessage(BrokeredMessage message)
         {
-            Envelope<Stream> envelope = WindowsServiceBusMessageConverter.ConstructEnvelope(message);
+            Envelope<Stream> envelope = AzureServiceBusMessageConverter.ConstructEnvelope(message);
             Task messageProcess = Task.Run(() =>
             {
                 MessageReleaseAction releaseResult = InvokeMessageHandler(envelope);
 
                 CompleteMessage(message, releaseResult);
             });
+
             OnMessageProcessing?.Invoke(this, new MessageProcessingEventArgs() { Task = messageProcess, MessageId = envelope.MessageId, CorrelationId = envelope.CorrelationId });
-
-            // http://stackoverflow.com/questions/30467896/brokeredmessage-automatically-disposed-after-calling-onmessage
-            // "...The received message needs to be processed in the callback function's life time..."
-            return messageProcess;
-        }
-
-        /// <summary>
-        /// Method called on message exceptions
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void OnExceptionReceived(object sender, ExceptionReceivedEventArgs e)
-        {
-            Console.WriteLine("Unhandled Exception: " + e.Exception);
         }
 
         private void CompleteMessage(BrokeredMessage message, MessageReleaseAction action)

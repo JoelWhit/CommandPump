@@ -12,28 +12,26 @@ namespace CommandPump.WindowsServiceBus
 {
     public class WindowsServiceBusMessageReceiver : IMessageReceiver
     {
-        private QueueClient _queue;
+        private QueueClient _client;
         private NamespaceManager _namespaceManager;
         private MessagingFactory _messagingFactory;
-
-        public IMessageConverter MessageConverter { get; } = new WindowsServiceBusMessageConverter();
 
         public int PrefetchCount
         {
             get
             {
-                return _queue.PrefetchCount;
+                return _client.PrefetchCount;
             }
             set
             {
-                _queue.PrefetchCount = value;
+                _client.PrefetchCount = value;
             }
         }
         public string QueueName
         {
             get
             {
-                return _queue?.Path;
+                return _client?.Path;
             }
         }
 
@@ -41,7 +39,7 @@ namespace CommandPump.WindowsServiceBus
         {
             _namespaceManager = NamespaceManager.CreateFromConnectionString(connectionString);
             _messagingFactory = MessagingFactory.Create(_namespaceManager.Address, _namespaceManager.Settings.TokenProvider);
-            _queue = QueueClient.CreateFromConnectionString(connectionString, queueName);
+            _client = QueueClient.CreateFromConnectionString(connectionString, queueName);
             PrefetchCount = preFetch;
         }
 
@@ -70,7 +68,7 @@ namespace CommandPump.WindowsServiceBus
 
             try
             {
-                message = _queue.Receive();
+                message = _client.Receive();
             }
             catch (TimeoutException) // expecting timeout exception
             {
@@ -99,15 +97,15 @@ namespace CommandPump.WindowsServiceBus
         /// <param name="message"></param>
         private void ProcessReceivedMessage(BrokeredMessage message)
         {
+            Envelope<Stream> envelope = WindowsServiceBusMessageConverter.ConstructEnvelope(message);
             Task messageProcess = Task.Run(() =>
             {
-                Envelope<Stream> env = MessageConverter.ConstructEnvelope(message);
-                MessageReleaseAction releaseResult = InvokeMessageHandler(env);
+                MessageReleaseAction releaseResult = InvokeMessageHandler(envelope);
 
                 CompleteMessage(message, releaseResult);
             });
 
-            OnMessageProcessing?.Invoke(this, new MessageProcessingEventArgs() { Task = messageProcess, MessageId = message.MessageId, CorrelationId = message.CorrelationId });
+            OnMessageProcessing?.Invoke(this, new MessageProcessingEventArgs() { Task = messageProcess, MessageId = envelope.MessageId, CorrelationId = envelope.CorrelationId });
         }
 
         private void CompleteMessage(BrokeredMessage message, MessageReleaseAction action)

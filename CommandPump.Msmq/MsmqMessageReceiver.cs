@@ -11,12 +11,12 @@ namespace CommandPump.Msmq
 {
     public class MsmqMessageReceiver : IMessageReceiver
     {
-        private MessageQueue _queue { get; set; }
+        private MessageQueue _client { get; set; }
         public string QueueName
         {
             get
             {
-                return _queue?.QueueName;
+                return _client?.QueueName;
             }
         }
 
@@ -25,11 +25,11 @@ namespace CommandPump.Msmq
         {
             if (!MessageQueue.Exists(connectionString))
             {
-                _queue = MessageQueue.Create(connectionString, true);
+                _client = MessageQueue.Create(connectionString, true);
             }
             else
             {
-                _queue = new MessageQueue(connectionString);
+                _client = new MessageQueue(connectionString);
             }
         }
 
@@ -38,7 +38,7 @@ namespace CommandPump.Msmq
         /// </summary>
         public void Start()
         {
-
+            return;
         }
 
         /// <summary>
@@ -46,7 +46,7 @@ namespace CommandPump.Msmq
         /// </summary>
         public void Stop()
         {
-
+            return;
         }
 
         /// <summary>
@@ -60,7 +60,7 @@ namespace CommandPump.Msmq
             trans.Begin();
             try
             {
-                message = _queue.Receive(trans);
+                message = _client.Receive(trans);
             }
             catch (TimeoutException) // expecting a timeout error here
             {
@@ -89,7 +89,7 @@ namespace CommandPump.Msmq
         /// </summary>
         public Func<Envelope<Stream>, MessageReleaseAction> InvokeMessageHandler { get; set; }
 
-        public IMessageConverter MessageConverter { get; } = new MsmqMessageConverter();
+
 
         /// <summary>
         /// Called by the message receiver to start processing a message
@@ -98,26 +98,15 @@ namespace CommandPump.Msmq
         /// <param name="message"></param>
         private void ProcessReceivedMessage(MessageQueueTransaction trans, Message message)
         {
+            Envelope<Stream> envelope = MsmqMessageConverter.ConstructEnvelope(message);
             Task messageProcess = Task.Run(() =>
-           {
-               Envelope<Stream> envelope = MessageConverter.ConstructEnvelope(message);
-               MessageReleaseAction action = InvokeMessageHandler(envelope);
-
-               CompleteMessage(message, trans, action);
-           });
-            MessageProcessingEventArgs args = new MessageProcessingEventArgs() { Task = messageProcess, MessageId = message.Id };
-
-            // the CorrelationId throws an exception when you attempt to get the value 
-            try
             {
-                args.CorrelationId = message.CorrelationId;
-            }
-            catch //will throw an exception if the correlationid is null
-            {
-                //args.CorrelationId = string.Empty;
-            }
+                MessageReleaseAction action = InvokeMessageHandler(envelope);
 
-            OnMessageProcessing?.Invoke(this, args);
+                CompleteMessage(message, trans, action);
+            });
+
+            OnMessageProcessing?.Invoke(this, new MessageProcessingEventArgs() { Task = messageProcess, MessageId = envelope.MessageId, CorrelationId = envelope.CorrelationId });
         }
 
         private void CompleteMessage(Message message, MessageQueueTransaction trans, MessageReleaseAction releaseResult)
@@ -134,11 +123,5 @@ namespace CommandPump.Msmq
             trans.Commit();
             trans.Dispose();
         }
-
-        /// <summary>
-        /// Takes the metadata envelope and translates it to messaging implementation
-        /// </summary>
-        /// <param name="command"></param>
-        /// <returns></returns>
     }
 }

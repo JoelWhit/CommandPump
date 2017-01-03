@@ -8,26 +8,24 @@ namespace CommandPump.Msmq
 {
     public class MsmqMessageSender : IMessageSender
     {
-        private MessageQueue _queue;
+        private MessageQueue _client;
         public string QueueName
         {
             get
             {
-                return _queue?.QueueName;
+                return _client?.QueueName;
             }
         }
-
-        public IMessageConverter MessageConverter { get; } = new MsmqMessageConverter();
 
         public MsmqMessageSender(string connectionString)
         {
             if (!MessageQueue.Exists(connectionString))
             {
-                _queue = MessageQueue.Create(connectionString, true);
+                _client = MessageQueue.Create(connectionString, true);
             }
             else
             {
-                _queue = new MessageQueue(connectionString);
+                _client = new MessageQueue(connectionString);
             }
         }
 
@@ -40,7 +38,7 @@ namespace CommandPump.Msmq
             using (MessageQueueTransaction trans = new MessageQueueTransaction())
             {
                 trans.Begin();
-                _queue.Send(MessageConverter.ConstructMessage(message), trans);
+                _client.Send(MsmqMessageConverter.ConstructMessage(message), trans);
                 trans.Commit();
             }
         }
@@ -54,7 +52,7 @@ namespace CommandPump.Msmq
             List<Message> msg = new List<Message>();
             foreach (var message in messages)
             {
-                msg.Add((Message)MessageConverter.ConstructMessage(message));
+                msg.Add(MsmqMessageConverter.ConstructMessage(message));
             }
 
             using (MessageQueueTransaction tran = new MessageQueueTransaction())
@@ -62,7 +60,7 @@ namespace CommandPump.Msmq
                 tran.Begin();
                 foreach (var mg in msg)
                 {
-                    _queue.Send(mg, tran);
+                    _client.Send(mg, tran);
                 }
                 tran.Commit();
             }

@@ -4,9 +4,9 @@ using System;
 using System.IO;
 using Microsoft.ServiceBus.Messaging;
 
-namespace CommandPump.WindowsServiceBus
+namespace CommandPump.AzureServiceBus
 {
-    public static class WindowsServiceBusMessageConverter
+    public static class AzureServiceBusMessageConverter
     {
         public static Envelope<Stream> ConstructEnvelope(BrokeredMessage message)
         {
