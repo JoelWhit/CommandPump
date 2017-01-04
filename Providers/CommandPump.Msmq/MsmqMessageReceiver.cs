@@ -3,7 +3,6 @@ using System;
 using System.IO;
 using System.Messaging;
 using System.Threading.Tasks;
-using CommandPump.Event;
 using CommandPump.Enum;
 using CommandPump.Common;
 
@@ -52,37 +51,32 @@ namespace CommandPump.Msmq
         /// <summary>
         /// Attempts to recieve a message, triggering the processing of the message on another thread
         /// </summary>
-        public void TriggerReceive()
+        public Task TriggerReceive()
         {
             MessageQueueTransaction trans = new MessageQueueTransaction();
-
             Message message = null;
             trans.Begin();
             try
             {
                 message = _client.Receive(trans);
+
+                if (message != null)
+                {
+                    // transaction will now be commited / disposed in another thread
+                    return ProcessReceivedMessage(trans, message); // process on another thread                
+                }
+                else
+                {
+                    trans.Abort();
+                    trans.Dispose();
+                    return null;
+                }
             }
             catch (TimeoutException) // expecting a timeout error here
             {
-                return;
-            }
-
-            if (message != null)
-            {
-                // transaction will now be commited / disposed in another thread
-                ProcessReceivedMessage(trans, message); // process on another thread                
-            }
-            else
-            {
-                trans.Abort();
-                trans.Dispose();
+                return null;
             }
         }
-
-        /// <summary>
-        /// Event fired when a message processing Task has been created
-        /// </summary>
-        public event EventHandler<MessageProcessingEventArgs> OnMessageProcessing;
 
         /// <summary>
         /// Delegate used to process messages
@@ -96,7 +90,7 @@ namespace CommandPump.Msmq
         /// </summary>
         /// <param name="trans"></param>
         /// <param name="message"></param>
-        private void ProcessReceivedMessage(MessageQueueTransaction trans, Message message)
+        private Task ProcessReceivedMessage(MessageQueueTransaction trans, Message message)
         {
             Envelope<Stream> envelope = MsmqMessageConverter.ConstructEnvelope(message);
             Task messageProcess = Task.Run(() =>
@@ -106,7 +100,7 @@ namespace CommandPump.Msmq
                 CompleteMessage(message, trans, action);
             });
 
-            OnMessageProcessing?.Invoke(this, new MessageProcessingEventArgs() { Task = messageProcess, MessageId = envelope.MessageId, CorrelationId = envelope.CorrelationId });
+            return messageProcess;
         }
 
         private void CompleteMessage(Message message, MessageQueueTransaction trans, MessageReleaseAction releaseResult)

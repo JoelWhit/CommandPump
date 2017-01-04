@@ -55,11 +55,10 @@
     <Compile Include="MessagePump.cs" />
     <Compile Include="Serializer\JsonTextSerializer.cs" />
     <Compile Include="TaskThrottler.cs" />
-    <Compile Include="TaskCache.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\CommandPump.Contract\CommandPump.Common.csproj">
+    <ProjectReference Include="..\CommandPump.Common\CommandPump.Common.csproj">
       <Project>{A010394B-CD84-404B-9D4B-6EEE79B16EBE}</Project>
       <Name>CommandPump.Common</Name>
     </ProjectReference>

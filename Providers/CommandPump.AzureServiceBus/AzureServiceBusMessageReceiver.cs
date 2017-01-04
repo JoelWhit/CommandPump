@@ -4,7 +4,6 @@ using Microsoft.ServiceBus;
 using System.Threading.Tasks;
 using CommandPump.Contract;
 using Microsoft.ServiceBus.Messaging;
-using CommandPump.Event;
 using CommandPump.Enum;
 using CommandPump.Common;
 
@@ -62,7 +61,7 @@ namespace CommandPump.AzureServiceBus
         /// <summary>
         /// Attempts to recieve a message, triggering the processing of the message on another thread
         /// </summary>
-        public void TriggerReceive()
+        public Task TriggerReceive()
         {
             BrokeredMessage message = null;
 
@@ -72,19 +71,18 @@ namespace CommandPump.AzureServiceBus
             }
             catch (TimeoutException) // expecting timeout exception
             {
-                return;
+                return null;
             }
 
             if (message != null)
             {
-                ProcessReceivedMessage(message); // process on another thread
+                return ProcessReceivedMessage(message); // process on another thread
+            }
+            else
+            {
+                return null;
             }
         }
-
-        /// <summary>
-        /// Event fired when a message processing Task has been created
-        /// </summary>
-        public event EventHandler<MessageProcessingEventArgs> OnMessageProcessing;
 
         /// <summary>
         /// Delegate used to process messages
@@ -95,7 +93,7 @@ namespace CommandPump.AzureServiceBus
         /// Called by the message receiver to start processing a message
         /// </summary>
         /// <param name="message"></param>
-        private void ProcessReceivedMessage(BrokeredMessage message)
+        private Task ProcessReceivedMessage(BrokeredMessage message)
         {
             Envelope<Stream> envelope = AzureServiceBusMessageConverter.ConstructEnvelope(message);
             Task messageProcess = Task.Run(() =>
@@ -105,7 +103,7 @@ namespace CommandPump.AzureServiceBus
                 CompleteMessage(message, releaseResult);
             });
 
-            OnMessageProcessing?.Invoke(this, new MessageProcessingEventArgs() { Task = messageProcess, MessageId = envelope.MessageId, CorrelationId = envelope.CorrelationId });
+            return messageProcess;
         }
 
         private void CompleteMessage(BrokeredMessage message, MessageReleaseAction action)

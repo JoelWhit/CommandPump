@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
-namespace CommandPump
+namespace CommandPump.Common
 {
     /// <summary>
     /// Collection of Tasks which fire a callback function when the task has completed
@@ -20,7 +22,20 @@ namespace CommandPump
         {
             get
             {
-                return TaskCollection.Keys.Count;
+                return TaskCollection.Count;
+            }
+        }
+
+        /// <summary>
+        /// Blocks untill all the tasks currently cached to complete. This will take 5+ seconds
+        /// </summary>
+        public void WaitForAllTasksToComplete()
+        {
+            // loop and sleep to make an attempt to get all the late coming tasks
+            while (CurrentlyRunningTasks != 0)
+            {
+                Task.WaitAll(TaskCollection.Values.ToArray());
+                Thread.Sleep(5000);
             }
         }
 
@@ -29,10 +44,19 @@ namespace CommandPump
         /// </summary>
         /// <param name="task"></param>
         /// <param name="removeCallback"></param>
-        public void AddTask(Task task, Action removeCallback)
+        public void AddTask(Task task, Action callback)
         {
             TaskCollection.TryAdd(task.Id, task);
-            Task.WhenAll(task).ContinueWith(x => RemoveTaskFromCache(task)).ContinueWith(x => removeCallback());
+            Task.WhenAll(task).ContinueWith(x => RemoveTaskFromCache(task)).ContinueWith(x => callback());
+        }
+
+        /// <summary>
+        /// Adds a task to the internal cache
+        /// </summary>
+        /// <param name="task"></param>
+        public void AddTask(Task task)
+        {
+            AddTask(task, () => { });
         }
 
         /// <summary>

@@ -1,7 +1,6 @@
 ﻿using CommandPump.Common;
 using CommandPump.Contract;
 using CommandPump.Enum;
-using CommandPump.Event;
 using System;
 using System.IO;
 using System.Threading;
@@ -18,6 +17,7 @@ namespace CommandPump
         private IMessageReceiver _receiver;
         private object _cancellationTokenLock = new object();
         private TaskThrottler _throttler;
+        private TaskCache _cache;
         private int _maxDegreeOfParallelism;
 
         private CancellationTokenSource cancellationSource;
@@ -27,9 +27,8 @@ namespace CommandPump
             _receiver = receiver;
             _receiver.InvokeMessageHandler = OnMessageReceived;
             _maxDegreeOfParallelism = maxDegreeOfParallelism;
-            _throttler = new TaskThrottler(maxDegreeOfParallelism);
-
-            receiver.OnMessageProcessing += OnMessageProcessingHandler;
+            _cache = new TaskCache();
+            _throttler = new TaskThrottler(maxDegreeOfParallelism, _cache);
         }
 
 
@@ -68,16 +67,6 @@ namespace CommandPump
         }
 
         /// <summary>
-        /// Subscribed event when message Tasks are created
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void OnMessageProcessingHandler(object sender, MessageProcessingEventArgs e)
-        {
-            _throttler.AddTask(e.Task);
-        }
-
-        /// <summary>
         /// Attempts to receive a message after a parallelism check
         /// </summary>
         /// <param name="cancellationToken"></param>
@@ -85,10 +74,21 @@ namespace CommandPump
         {
             while (!cancellationToken.IsCancellationRequested)
             {
-                // paralism check - running tasks
-                _throttler.WaitUntilAllowedParallelism(cancellationToken);
+                try
+                {
+                    _throttler.WaitUntilAllowedParallelism(cancellationToken);
 
-                _receiver.TriggerReceive();
+                    Task messageProcess = _receiver.TriggerReceive();
+
+                    if (messageProcess != null)
+                    {
+                        _throttler.AddTask(messageProcess);
+                    }
+                }
+                finally
+                {
+                    _throttler.WorkAttemptFinished();
+                }
             }
         }
 
@@ -123,11 +123,11 @@ namespace CommandPump
         }
 
         /// <summary>
-        /// Waits for the currently processing messages to complete
+        /// Blocks untill all the tasks currently cached to complete. This will take 5+ seconds
         /// </summary>
         public void WaitForCompletion()
         {
-            _throttler.WaitForAllTasksToComplete();
+            _cache.WaitForAllTasksToComplete();
         }
     }
 }

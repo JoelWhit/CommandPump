@@ -3,7 +3,6 @@ using System;
 using System.Threading.Tasks;
 using CommandPump.Common;
 using CommandPump.Enum;
-using CommandPump.Event;
 using System.IO;
 using Amazon.Runtime;
 using Amazon.SQS;
@@ -14,11 +13,13 @@ namespace CommandPump.AmazonSQS
     public class AmazonSQSMessageReceiver : IMessageReceiver
     {
         private AmazonSQSClient _client;
+
+        /// <summary>
+        /// Delegate used to process messages
+        /// </summary>
         public Func<Envelope<Stream>, MessageReleaseAction> InvokeMessageHandler { get; set; }
 
         public string QueueName { get; private set; }
-
-        public event EventHandler<MessageProcessingEventArgs> OnMessageProcessing;
 
         public AmazonSQSMessageReceiver(string queueName, AWSCredentials credentials, AmazonSQSConfig clientConfig)
         {
@@ -26,28 +27,41 @@ namespace CommandPump.AmazonSQS
             QueueName = queueName;
         }
 
+        /// <summary>
+        /// Starts the message pump
+        /// </summary>
         public void Start()
         {
             return;
         }
 
+        /// <summary>
+        /// Stops the message pump
+        /// </summary>
         public void Stop()
         {
             return;
         }
 
-        public void TriggerReceive()
+        /// <summary>
+        /// Synchronous method that attempts to receive messages triggering async execution of the message handler
+        /// </summary>
+        public Task TriggerReceive()
         {
             ReceiveMessageRequest request = new ReceiveMessageRequest(QueueName);
+            request.MaxNumberOfMessages = 1;
+
             ReceiveMessageResponse responce = _client.ReceiveMessage(request);
 
             foreach (var message in responce.Messages)
             {
-                ProcessRecieveMessage(message);
+                return ProcessRecieveMessage(message);
             }
+
+            return null;
         }
 
-        public void ProcessRecieveMessage(Message message)
+        public Task ProcessRecieveMessage(Message message)
         {
             Envelope<Stream> envelope = AmazonSQSMessageConverter.ConstructEnvelope(message);
             Task messageProcess = Task.Run(() =>
@@ -57,7 +71,7 @@ namespace CommandPump.AmazonSQS
                 CompleteMessage(message, releaseResult);
             });
 
-            OnMessageProcessing?.Invoke(this, new MessageProcessingEventArgs() { Task = messageProcess, MessageId = envelope.MessageId, CorrelationId = envelope.CorrelationId });
+            return messageProcess;
         }
 
         private void CompleteMessage(Message message, MessageReleaseAction action)

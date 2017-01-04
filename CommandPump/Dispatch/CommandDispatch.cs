@@ -8,6 +8,9 @@ namespace CommandPump.Dispatch
 {
     public class CommandDispatch : ICommandDispatch
     {
+        /// <summary>
+        /// Internal handler cache
+        /// </summary>
         private ConcurrentDictionary<Type, ICommandHandler> _commandHandlers;
 
         public CommandDispatch()
@@ -80,6 +83,11 @@ namespace CommandPump.Dispatch
             }
         }
 
+        /// <summary>
+        /// Locates the handler attached to the command and executes it
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="command"></param>
         public void Dispatch<T>(T command) where T : ICommand
         {
             if (!_commandHandlers.ContainsKey(command.GetType()))

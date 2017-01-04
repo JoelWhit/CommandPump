@@ -1,4 +1,4 @@
-﻿using System.Linq;
+﻿using CommandPump.Common;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -12,12 +12,18 @@ namespace CommandPump
     {
         private AutoResetEvent _waitHandle;
 
-        public TaskCache TaskCache;
+        private TaskCache _taskCache;
         public int MaxDegreeOfParallelism;
 
-        public TaskThrottler(int maxDegreeOfParallelism)
+        /// <summary>
+        /// Incremented when looking for Messages and decremented when finished
+        /// CurrentlyRunningTasks + _temporaryOffset > MaxDegreeOfParallelism
+        /// </summary>
+        private int _temporaryOffset = 0;
+
+        public TaskThrottler(int maxDegreeOfParallelism, TaskCache cache)
         {
-            TaskCache = new TaskCache();
+            _taskCache = cache;
             MaxDegreeOfParallelism = maxDegreeOfParallelism;
             _waitHandle = new AutoResetEvent(true);
         }
@@ -28,7 +34,7 @@ namespace CommandPump
         /// <param name="task"></param>
         public void AddTask(Task task)
         {
-            TaskCache.AddTask(task, NotifyCompletion);
+            _taskCache.AddTask(task, NotifyCompletion);
         }
 
         /// <summary>
@@ -40,20 +46,13 @@ namespace CommandPump
         }
 
         /// <summary>
-        /// Blocks untill all the tasks currently cached to complete
-        /// </summary>
-        public void WaitForAllTasksToComplete()
-        {
-            Task.WaitAll(TaskCache.TaskCollection.Values.ToArray());
-        }
-
-        /// <summary>
         /// Blocks untill the parallelism limit is no longer exceeded
+        /// When block is released the offset is incremented
         /// </summary>
         /// <param name="token"></param>
         public void WaitUntilAllowedParallelism(CancellationToken token)
         {
-            while(TaskCache.CurrentlyRunningTasks >= MaxDegreeOfParallelism)
+            while (_taskCache.CurrentlyRunningTasks + _temporaryOffset >= MaxDegreeOfParallelism)
             {
                 if (token.IsCancellationRequested)
                 {
@@ -61,6 +60,25 @@ namespace CommandPump
                 }
                 _waitHandle.WaitOne();
             }
+            WorkAttemptStart();
+        }
+
+        /// <summary>
+        /// Increments a temporary value used to offset message processing attempts 
+        /// with currently running tasks
+        /// </summary>
+        public void WorkAttemptStart()
+        {
+            Interlocked.Increment(ref _temporaryOffset);
+        }
+
+        /// <summary>
+        /// Decrements a temporary value used to offset message processing attempts 
+        /// with currently running tasks
+        /// </summary>
+        public void WorkAttemptFinished()
+        {
+            Interlocked.Decrement(ref _temporaryOffset);
         }
     }
 }

@@ -1,7 +1,6 @@
 ﻿using CommandPump.Common;
 using CommandPump.Contract;
 using CommandPump.Enum;
-using CommandPump.Event;
 using Microsoft.ServiceBus;
 using Microsoft.ServiceBus.Messaging;
 using System;
@@ -19,6 +18,11 @@ namespace CommandPump.AzureServiceBus
         private MessagingFactory _messagingFactory;
         private OnMessageOptions _messageOptions;
         private QueueClient _client;
+
+        /// <summary>
+        /// internal task cache for service bus - there isn't an inbuilt way of waiting for all processing to finish
+        /// </summary>
+        private TaskCache _cache;
 
         public int MaxDegreeOfParalism
         {
@@ -59,8 +63,9 @@ namespace CommandPump.AzureServiceBus
 
             _messageOptions = new OnMessageOptions();
             _messageOptions.AutoComplete = false;
-            _messageOptions.ExceptionReceived += OnExceptionReceived;
             _messageOptions.MaxConcurrentCalls = maxDegreeOfParalism;
+
+            _cache = new TaskCache();
         }
 
         /// <summary>
@@ -77,21 +82,17 @@ namespace CommandPump.AzureServiceBus
         public void Stop()
         {
             _client.Close();
+            _cache.WaitForAllTasksToComplete();
         }
 
         /// <summary>
         /// Does nothing. The magic starts when the Start() method is called
         /// </summary>
-        public void TriggerReceive()
+        public Task TriggerReceive()
         {
-            // do nothing - the message pump main loop is selfcontrolled on OnMessage
-            return;
+            // do nothing - the message pump main loop is self controlled on OnMessage
+            return null;
         }
-
-        /// <summary>
-        /// Event fired when a message processing Task has been created
-        /// </summary>
-        public event EventHandler<MessageProcessingEventArgs> OnMessageProcessing;
 
         /// <summary>
         /// Delegate used to process messages
@@ -112,21 +113,13 @@ namespace CommandPump.AzureServiceBus
 
                 CompleteMessage(message, releaseResult);
             });
-            OnMessageProcessing?.Invoke(this, new MessageProcessingEventArgs() { Task = messageProcess, MessageId = message.MessageId, CorrelationId = message.CorrelationId });
 
             // http://stackoverflow.com/questions/30467896/brokeredmessage-automatically-disposed-after-calling-onmessage
             // "...The received message needs to be processed in the callback function's life time..."
-            return messageProcess;
-        }
 
-        /// <summary>
-        /// Method called on message exceptions
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void OnExceptionReceived(object sender, ExceptionReceivedEventArgs e)
-        {
-            Console.WriteLine("Unhandled Exception: " + e.Exception);
+            _cache.AddTask(messageProcess);
+
+            return messageProcess;
         }
 
         private void CompleteMessage(BrokeredMessage message, MessageReleaseAction action)

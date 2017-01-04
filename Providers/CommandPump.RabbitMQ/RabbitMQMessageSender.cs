@@ -30,6 +30,10 @@ namespace CommandPump.RabbitMQ
                      arguments: null);
         }
 
+        /// <summary>
+        /// Sends a message using the metadata in the envelope if applicable
+        /// </summary>
+        /// <param name="message"></param>
         public void Send(Envelope<Stream> message)
         {
             IBasicProperties prop = _client.CreateBasicProperties();
@@ -40,6 +44,10 @@ namespace CommandPump.RabbitMQ
                                  body: RabbitMQMessageConverter.GetBytesFromStream(message.Body));
         }
 
+        /// <summary>
+        /// Sends a collection of messages inside a batch transaction
+        /// </summary>
+        /// <param name="messages"></param>
         public void SendBatch(IEnumerable<Envelope<Stream>> messages)
         {
             foreach (var message in messages)

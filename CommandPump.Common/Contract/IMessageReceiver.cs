@@ -1,8 +1,8 @@
 ﻿using CommandPump.Common;
 using CommandPump.Enum;
-using CommandPump.Event;
 using System;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace CommandPump.Contract
 {
@@ -13,16 +13,10 @@ namespace CommandPump.Contract
         /// </summary>
         Func<Envelope<Stream>, MessageReleaseAction> InvokeMessageHandler { get; set; }
 
-
         /// <summary>
         /// Synchronous method that attempts to receive messages triggering async execution of the message handler
         /// </summary>
-        void TriggerReceive();
-
-        /// <summary>
-        /// Event fired when a message processing Task has been created
-        /// </summary>
-        event EventHandler<MessageProcessingEventArgs> OnMessageProcessing;
+        Task TriggerReceive();
 
         /// <summary>
         /// Starts the message pump

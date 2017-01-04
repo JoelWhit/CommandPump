@@ -5,19 +5,19 @@ VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommandPump", "CommandPump\CommandPump.csproj", "{D96397D7-1FB5-4B19-A962-6FBAD30543DB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommandPump.Msmq", "CommandPump.Msmq\CommandPump.Msmq.csproj", "{EFC3946C-993B-409A-8764-E11684887E8F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommandPump.Msmq", "Providers\CommandPump.Msmq\CommandPump.Msmq.csproj", "{EFC3946C-993B-409A-8764-E11684887E8F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommandPump.WindowsServiceBus", "CommandPump.WindowsServiceBus\CommandPump.WindowsServiceBus.csproj", "{EBA721B4-A246-45C6-B655-4EA18B0EA1C2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommandPump.WindowsServiceBus", "Providers\CommandPump.WindowsServiceBus\CommandPump.WindowsServiceBus.csproj", "{EBA721B4-A246-45C6-B655-4EA18B0EA1C2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommandPump.Common", "CommandPump.Contract\CommandPump.Common.csproj", "{A010394B-CD84-404B-9D4B-6EEE79B16EBE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommandPump.Common", "CommandPump.Common\CommandPump.Common.csproj", "{A010394B-CD84-404B-9D4B-6EEE79B16EBE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommandPump.AzureServiceBus", "CommandPump.AzureServiceBus\CommandPump.AzureServiceBus.csproj", "{C244721A-0EDF-4659-9FAF-BC6EFC22CAB7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommandPump.AzureServiceBus", "Providers\CommandPump.AzureServiceBus\CommandPump.AzureServiceBus.csproj", "{C244721A-0EDF-4659-9FAF-BC6EFC22CAB7}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Providers", "Providers", "{49E5B748-6E86-4699-BF42-DAFF6541483F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommandPump.AmazonSQS", "CommandPump.AmazonSQS\CommandPump.AmazonSQS.csproj", "{B56C4F6B-3FB9-4FA5-9A75-F53E55CAA3C2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommandPump.AmazonSQS", "Providers\CommandPump.AmazonSQS\CommandPump.AmazonSQS.csproj", "{B56C4F6B-3FB9-4FA5-9A75-F53E55CAA3C2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommandPump.RabbitMQ", "CommandPump.RabbitMQ\CommandPump.RabbitMQ.csproj", "{AD03A68A-2117-433B-9811-A725B1DA3F13}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommandPump.RabbitMQ", "Providers\CommandPump.RabbitMQ\CommandPump.RabbitMQ.csproj", "{AD03A68A-2117-433B-9811-A725B1DA3F13}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -20,6 +20,10 @@ namespace CommandPump.AmazonSQS
             QueueName = queueName;
         }
 
+        /// <summary>
+        /// Sends a message using the metadata in the envelope if applicable
+        /// </summary>
+        /// <param name="message"></param>
         public void Send(Envelope<Stream> message)
         {
             SendMessageRequest msgRequest = AmazonSQSMessageConverter.ConstructMessage(message);
@@ -28,6 +32,10 @@ namespace CommandPump.AmazonSQS
             _client.SendMessage(msgRequest);
         }
 
+        /// <summary>
+        /// Sends a collection of messages inside a batch transaction
+        /// </summary>
+        /// <param name="messages"></param>
         public void SendBatch(IEnumerable<Envelope<Stream>> messages)
         {
             SendMessageBatchRequest msgRequest = AmazonSQSMessageConverter.ConstructMessage(messages);

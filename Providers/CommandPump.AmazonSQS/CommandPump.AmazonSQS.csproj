@@ -35,7 +35,7 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="AWSSDK.SQS, Version=3.3.0.0, Culture=neutral, PublicKeyToken=885c28607f98e604, processorArchitecture=MSIL">
-      <HintPath>..\packages\AWSSDK.SQS.3.3.1.6\lib\net45\AWSSDK.SQS.dll</HintPath>
+      <HintPath>..\..\packages\AWSSDK.SQS.3.3.1.6\lib\net45\AWSSDK.SQS.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
@@ -57,13 +57,13 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <Analyzer Include="..\packages\AWSSDK.SQS.3.3.1.6\analyzers\dotnet\cs\AWSSDK.SQS.CodeAnalysis.dll" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\CommandPump.Contract\CommandPump.Common.csproj">
+    <ProjectReference Include="..\..\CommandPump.Common\CommandPump.Common.csproj">
       <Project>{A010394B-CD84-404B-9D4B-6EEE79B16EBE}</Project>
       <Name>CommandPump.Common</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Analyzer Include="..\..\packages\AWSSDK.SQS.3.3.1.6\analyzers\dotnet\cs\AWSSDK.SQS.CodeAnalysis.dll" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
