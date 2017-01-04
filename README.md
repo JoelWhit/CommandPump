@@ -76,3 +76,6 @@ Heavily inspiried by the Microsoft CQRS Journey project, CommandPump seeks to im
 ## Supported Message Brokers
 - MSMQ
 - Windows Service Bus
+- Azure Service Bus (experimental)
+- AmazonSQS (experimental)
+- RabbitMQ (experimental)
